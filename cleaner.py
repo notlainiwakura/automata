@@ -32,7 +32,8 @@ def process_element(element):
 
 
 def write_to_txt_file(title, preconds, steps, expected, output_txt_file):
-    with open(output_txt_file, 'a') as txt_file:
+    # Open the file in append mode ('a'), which will create a new file if it does not exist
+    with open(output_txt_file, 'a', encoding='utf-8') as txt_file:
         txt_file.write(f"Title: {title}\n")
         txt_file.write(f"Preconditions: {preconds}\n")
         txt_file.write("Steps:\n")
@@ -43,18 +44,31 @@ def write_to_txt_file(title, preconds, steps, expected, output_txt_file):
         txt_file.write(f"Expected Results: {expected}\n\n")
 
 def process_xml_file(input_filename, output_filename, output_txt_file):
-    tree = ET.parse(input_filename)
-    root = tree.getroot()
+    try:
+        tree = ET.parse(input_filename)
+        root = tree.getroot()
 
-    process_element(root)
-    tree.write(output_filename)
+        process_element(root)
+        tree.write(output_filename)
 
-    for case in root.findall('.//case'):
-        title = case.find('title').text
-        preconds = case.find('./custom/preconds').text
-        steps = [step.strip() for step in case.find('./custom/steps').text.split('\n')]
-        expected = case.find('./custom/expected').text
-        write_to_txt_file(title, preconds, steps, expected, output_txt_file)
+        for test in root.findall('.//test'):
+            title = test.find('title')
+            preconds = test.find('./custom/preconds')
+            steps = test.find('./custom/steps')
+            expected = test.find('./custom/expected')
+
+            if title is not None and preconds is not None and steps is not None and expected is not None:
+                title_text = title.text
+                preconds_text = preconds.text
+                steps_list = [step.strip() for step in steps.text.split('\n')]
+                expected_text = expected.text
+
+                write_to_txt_file(title_text, preconds_text, steps_list, expected_text, output_txt_file)
+    except ET.ParseError as e:
+        print(f"Error parsing XML file: {e}")
+    except Exception as e:
+        print(f"Error processing XML file: {e}")
+
 
 def clean_xml(input_file, tags_to_keep):
     tree = ET.parse(input_file)
@@ -100,7 +114,7 @@ if __name__ == '__main__':
     input_file_directory, input_file_name = os.path.split(input_xml_file)
 
     # Ask the user if the XML is clean
-    is_xml_clean = input("Is the XML file clean? (yes/no): ").lower()
+    is_xml_clean = input("Is the file ready to be pokemoned? (yes/no): ").lower()
 
     # If the XML is not clean, run the clean_xml method and its associated methods
     if is_xml_clean != 'yes':
@@ -113,9 +127,14 @@ if __name__ == '__main__':
         output_file_name = f"pokemoned_{input_file_name}"
         output_xml_file = os.path.join(input_file_directory, output_file_name)
         output_txt_file_name = f"output_{input_file_name.split('.')[0]}.txt"
+
         output_txt_file = os.path.join(input_file_directory, output_txt_file_name)
+
+        # Call the process_xml_file function only when is_xml_clean is 'yes'
         process_xml_file(input_xml_file, output_xml_file, output_txt_file)
 
+        # Remove the output XML file
+        os.remove(output_xml_file)
 
 
 
