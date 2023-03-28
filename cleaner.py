@@ -1,3 +1,5 @@
+#This script takes in .xml file from an exported test suite from TestRail, replaces any word preceded by asterisks with dummy data and outputs test cases in .txt format
+
 import re
 import random
 import xml.etree.ElementTree as ET
