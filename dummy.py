@@ -1,3 +1,5 @@
+#This script takes in .txt file and replaces any word preceded by asterisks with dummy data
+
 import re
 from random import choice
 from string import ascii_letters
